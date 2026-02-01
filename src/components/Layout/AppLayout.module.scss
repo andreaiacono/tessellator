@@ -1,0 +1,43 @@
+.appLayout {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.menuBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.mainContent {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.canvasSection {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.controlsSection {
+  width: 300px;
+  height: 100%;
+  flex-shrink: 0;
+}
