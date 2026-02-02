@@ -19,6 +19,9 @@ export const TessellatorCanvas = ({ canvasRef }: TessellatorCanvasProps) => {
   const color2 = useTessellatorStore((state) => state.color2);
   const hoveringPoint = useTessellatorStore((state) => state.hoveringPoint);
   const hoveringPixel = useTessellatorStore((state) => state.hoveringPixel);
+  const isDrawing = useTessellatorStore((state) => state.isDrawing);
+  const currentStroke = useTessellatorStore((state) => state.currentStroke);
+  const drawingStartCell = useTessellatorStore((state) => state.drawingStartCell);
 
   // Use the renderer hook
   useCanvasRenderer(canvasRef, {
@@ -31,6 +34,9 @@ export const TessellatorCanvas = ({ canvasRef }: TessellatorCanvasProps) => {
     color2,
     hoveringPoint,
     hoveringPixel,
+    isDrawing,
+    currentStroke,
+    drawingStartCell,
   });
 
   // Use the interaction hook

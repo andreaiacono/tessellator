@@ -17,16 +17,26 @@ export const ControlsPanel = () => {
   const setColor1 = useTessellatorStore((state) => state.setColor1);
   const setColor2 = useTessellatorStore((state) => state.setColor2);
   const resetCanvas = useTessellatorStore((state) => state.resetCanvas);
+  const clearAllStrokes = useTessellatorStore((state) => state.clearAllStrokes);
 
   const handleReset = () => {
     resetCanvas();
     toast.success('Canvas reset to default');
   };
 
+  const handleClearStrokes = () => {
+    clearAllStrokes();
+    toast.success('All strokes cleared');
+  };
+
   return (
     <div className={styles.controlsPanel}>
       <button className={styles.resetButton} onClick={handleReset}>
         Reset
+      </button>
+
+      <button className={styles.resetButton} onClick={handleClearStrokes}>
+        Clear Strokes
       </button>
 
       <div className={styles.checkboxGroup}>

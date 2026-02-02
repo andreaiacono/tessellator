@@ -22,6 +22,8 @@ export const AppMenu = ({ canvasRef }: AppMenuProps) => {
   const color1 = useTessellatorStore((state) => state.color1);
   const color2 = useTessellatorStore((state) => state.color2);
   const loadFromFile = useTessellatorStore((state) => state.loadFromFile);
+  const isDrawing = useTessellatorStore((state) => state.isDrawing);
+  const cancelStroke = useTessellatorStore((state) => state.cancelStroke);
 
   const handleSave = () => {
     try {
@@ -65,10 +67,17 @@ export const AppMenu = ({ canvasRef }: AppMenuProps) => {
     setIsOpen(false);
   };
 
+  const handleCancel = () => {
+    if (isDrawing) {
+      cancelStroke();
+    }
+  };
+
   useKeyboardShortcuts({
     onSave: handleSave,
     onOpen: handleOpen,
     onExport: handleExport,
+    onCancel: handleCancel,
   });
 
   return (

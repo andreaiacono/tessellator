@@ -4,9 +4,10 @@ interface KeyboardShortcuts {
   onSave?: () => void;
   onOpen?: () => void;
   onExport?: () => void;
+  onCancel?: () => void;
 }
 
-export const useKeyboardShortcuts = ({ onSave, onOpen, onExport }: KeyboardShortcuts) => {
+export const useKeyboardShortcuts = ({ onSave, onOpen, onExport, onCancel }: KeyboardShortcuts) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl/Cmd key
@@ -21,10 +22,13 @@ export const useKeyboardShortcuts = ({ onSave, onOpen, onExport }: KeyboardShort
       } else if (isModifier && e.key === 'e') {
         e.preventDefault();
         onExport?.();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel?.();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSave, onOpen, onExport]);
+  }, [onSave, onOpen, onExport, onCancel]);
 };

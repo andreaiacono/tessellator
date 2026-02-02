@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { Cell } from '../../core/models/Cell';
+import type { Cell, Stroke } from '../../core/models/Cell';
 import type { Point } from '../../core/models/Point';
 import { scalePoint } from '../../core/models/Point';
 import { setNewSize } from '../../core/models/Cell';
@@ -15,6 +15,9 @@ interface RendererOptions {
   color2: string;
   hoveringPoint: Point | null;
   hoveringPixel: Point | null;
+  isDrawing: boolean;
+  currentStroke: Point[] | null;
+  drawingStartCell: { x: number; y: number } | null;
 }
 
 export const useCanvasRenderer = (
@@ -31,6 +34,9 @@ export const useCanvasRenderer = (
     color2,
     hoveringPoint,
     hoveringPixel,
+    isDrawing,
+    currentStroke,
+    drawingStartCell,
   } = options;
 
   useEffect(() => {
@@ -63,6 +69,28 @@ export const useCanvasRenderer = (
           ctx.strokeRect(x * boxWidth, y * boxWidth, boxWidth, boxWidth);
         }
       }
+    }
+
+    // Draw freehand strokes in each cell
+    for (let x = 0; x <= zoom; x++) {
+      for (let y = 0; y <= zoom; y++) {
+        drawStrokes(ctx, cell, boxWidth, x * boxWidth, (y + 1) * boxWidth);
+      }
+    }
+
+    // Draw current stroke preview (semi-transparent)
+    if (currentStroke && currentStroke.length > 1 && drawingStartCell) {
+      const previewStroke: Stroke = {
+        points: currentStroke,
+        thickness: thickness,
+        color: color2,
+      };
+
+      // Draw preview in starting cell with transparency
+      ctx.globalAlpha = 0.6;
+      const { x: cellX, y: cellY } = drawingStartCell;
+      drawStroke(ctx, previewStroke, boxWidth, cellX * boxWidth, (cellY + 1) * boxWidth);
+      ctx.globalAlpha = 1.0;
     }
 
     // Draw lines for each cell in the tessellation
@@ -109,6 +137,9 @@ export const useCanvasRenderer = (
     color2,
     hoveringPoint,
     hoveringPixel,
+    isDrawing,
+    currentStroke,
+    drawingStartCell,
     canvasRef,
   ]);
 };
@@ -179,4 +210,44 @@ const drawHoverIndicators = (
     ctx.arc(left + scaledPoint.x, top - scaledPoint.y, radius, 0, 2 * Math.PI);
     ctx.stroke();
   }
+};
+
+const drawStroke = (
+  ctx: CanvasRenderingContext2D,
+  stroke: Stroke,
+  width: number,
+  left: number,
+  top: number
+) => {
+  if (stroke.points.length < 2) return;
+
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.thickness;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  const firstPoint = scalePoint(stroke.points[0], width, width);
+  ctx.moveTo(left + firstPoint.x, top - firstPoint.y);
+
+  for (let i = 1; i < stroke.points.length; i++) {
+    const point = scalePoint(stroke.points[i], width, width);
+    ctx.lineTo(left + point.x, top - point.y);
+  }
+
+  ctx.stroke();
+};
+
+const drawStrokes = (
+  ctx: CanvasRenderingContext2D,
+  cell: Cell,
+  width: number,
+  left: number,
+  top: number
+) => {
+  if (!cell.strokes || cell.strokes.length === 0) return;
+
+  cell.strokes.forEach(stroke => {
+    drawStroke(ctx, stroke, width, left, top);
+  });
 };

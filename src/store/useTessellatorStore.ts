@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import type { Cell } from '../core/models/Cell';
+import type { Cell, Stroke } from '../core/models/Cell';
 import type { Point } from '../core/models/Point';
-import { createCell, findExistingPoint, addHorizontalPoint, deletePoint } from '../core/models/Cell';
+import { createCell, findExistingPoint, addHorizontalPoint, deletePoint, addStroke, clearStrokes } from '../core/models/Cell';
 import type { FileData } from '../core/models/FileData';
 import { intColorToHex } from '../core/utils/colorUtils';
 
@@ -24,6 +24,11 @@ interface TessellatorState {
   draggingPoint: Point | null;
   startingCoords: { x: number; y: number } | null;
 
+  // Freehand drawing state
+  isDrawing: boolean;
+  currentStroke: Point[] | null;
+  drawingStartCell: { x: number; y: number } | null;
+
   // Actions
   setCell: (cell: Cell) => void;
   updateZoom: (zoom: number) => void;
@@ -40,6 +45,11 @@ interface TessellatorState {
   updatePointPosition: (point: Point, x: number, y: number) => void;
   resetCanvas: () => void;
   loadFromFile: (data: FileData) => void;
+  startStroke: (cellX: number, cellY: number) => void;
+  addStrokePoint: (point: Point) => void;
+  endStroke: () => void;
+  cancelStroke: () => void;
+  clearAllStrokes: () => void;
 }
 
 export const useTessellatorStore = create<TessellatorState>((set, get) => ({
@@ -56,6 +66,9 @@ export const useTessellatorStore = create<TessellatorState>((set, get) => ({
   isDragging: false,
   draggingPoint: null,
   startingCoords: null,
+  isDrawing: false,
+  currentStroke: null,
+  drawingStartCell: null,
 
   // Actions
   setCell: (cell) => set({ cell }),
@@ -118,12 +131,20 @@ export const useTessellatorStore = create<TessellatorState>((set, get) => ({
       isDragging: false,
       draggingPoint: null,
       startingCoords: null,
+      isDrawing: false,
+      currentStroke: null,
+      drawingStartCell: null,
     });
   },
 
   loadFromFile: (data) => {
+    // Ensure strokes array exists for backward compatibility
+    const cell = {
+      ...data.cell,
+      strokes: data.cell.strokes || [],
+    };
     set({
-      cell: data.cell,
+      cell,
       zoom: data.zoom,
       thickness: data.lineThickness || 1,
       drawGrid: data.drawGrid,
@@ -131,5 +152,67 @@ export const useTessellatorStore = create<TessellatorState>((set, get) => ({
       color1: data.color1 !== undefined ? intColorToHex(data.color1) : '#ffffff',
       color2: data.color2 !== undefined ? intColorToHex(data.color2) : '#000000',
     });
+  },
+
+  startStroke: (cellX, cellY) => {
+    set({
+      isDrawing: true,
+      currentStroke: [],
+      drawingStartCell: { x: cellX, y: cellY },
+    });
+  },
+
+  addStrokePoint: (point) => {
+    const state = get();
+    if (!state.isDrawing || !state.currentStroke) return;
+
+    const newStroke = [...state.currentStroke, point];
+    set({ currentStroke: newStroke });
+  },
+
+  endStroke: () => {
+    const state = get();
+    if (!state.currentStroke || state.currentStroke.length < 2) {
+      // Discard strokes with less than 2 points
+      set({
+        isDrawing: false,
+        currentStroke: null,
+        drawingStartCell: null,
+      });
+      return;
+    }
+
+    // Create stroke object with current settings
+    const stroke: Stroke = {
+      points: state.currentStroke,
+      thickness: state.thickness,
+      color: state.color2,
+    };
+
+    // Add stroke to cell
+    const newCell = { ...state.cell, strokes: state.cell.strokes ? [...state.cell.strokes] : [] };
+    addStroke(newCell, stroke);
+
+    set({
+      cell: newCell,
+      isDrawing: false,
+      currentStroke: null,
+      drawingStartCell: null,
+    });
+  },
+
+  cancelStroke: () => {
+    set({
+      isDrawing: false,
+      currentStroke: null,
+      drawingStartCell: null,
+    });
+  },
+
+  clearAllStrokes: () => {
+    const state = get();
+    const newCell = { ...state.cell, strokes: [] };
+    clearStrokes(newCell);
+    set({ cell: newCell });
   },
 }));

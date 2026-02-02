@@ -1,10 +1,17 @@
 import type { Point, ScaledPoint } from './Point';
 import { scalePoint } from './Point';
 
+export interface Stroke {
+  points: Point[];        // Normalized coordinates (0-1 range)
+  thickness: number;      // Line thickness when drawn
+  color: string;          // Color when drawn (hex format)
+}
+
 export interface Cell {
   size: number;
   epsilon: number;
   points: Point[];
+  strokes?: Stroke[];     // Optional for backward compatibility
 }
 
 export const createCell = (): Cell => ({
@@ -15,6 +22,7 @@ export const createCell = (): Cell => ({
     { x: 1.0, y: 0.0, isMoving: false },
     { x: 1.0, y: 1.0, isMoving: false },
   ],
+  strokes: [],
 });
 
 export const createCellFromData = (points: Point[], size: number = 1, epsilon: number = 0.1): Cell => ({
@@ -88,4 +96,15 @@ export const deletePoint = (cell: Cell, point: Point): void => {
   if (index !== -1) {
     cell.points.splice(index, 1);
   }
+};
+
+export const addStroke = (cell: Cell, stroke: Stroke): void => {
+  if (!cell.strokes) {
+    cell.strokes = [];
+  }
+  cell.strokes.push(stroke);
+};
+
+export const clearStrokes = (cell: Cell): void => {
+  cell.strokes = [];
 };
